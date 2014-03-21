@@ -71,7 +71,8 @@ runtest() {
     local body=
     local elapse="`LC_ALL=C /bin/date +%s`"
     for python in $pythons; do
-        if [ $python = 24 ] && /bin/grep -q '^min_python = (2, *[5-9])$' "$workdir/src/setup.py"; then
+        version="`sed -n "/^ *__version__ = '\\([0-9]*\\.[0-9]*\\)[^']*'*/ { s//\\1/; p; q }" "$workdir/src/trac/__init__.py"`"
+        if [ $python = 24 -a "$version" != 0.12 ]; then
             continue
         fi
         pids=
@@ -81,7 +82,7 @@ runtest() {
             mkdir "$workdir/tmp-py$python-$db"
             TMP="$workdir/tmp-py$python-$db" \
                 /usr/bin/make -C "$workdir/src-py$python-$db" \
-                python=$python db=$db \
+                python=$python-$version db=$db \
                 Trac.egg-info compile stats unit-test functional-test \
                 >"$nrevdir/py$python-$db.log" 2>&1 &
             pids="$pids $!"
@@ -178,11 +179,11 @@ main() {
     done
 }
 
-main
+main "$@"
 if [ -n "$loop_secs" ]; then
     while :; do
-        echo "Sleep $loop_secs seconds..."
+        echo -n "`date -R`\r"
         sleep "$loop_secs"
-        main
+        main "$@"
     done
 fi
