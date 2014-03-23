@@ -26,6 +26,9 @@ tar() {
 sendmail() {
     LC_ALL=C /usr/lib/sendmail "$@"
 }
+qprint() {
+    LC_ALL=C /usr/bin/qprint "$@"
+}
 
 tmpdir=/dev/shm
 all_refs=
@@ -66,11 +69,11 @@ shift
 runtest() {
     local workdir="$1"
     local nrevdir="$2"
-    local pass=0
-    local fail=0
-    local body=
     local elapse="`LC_ALL=C /bin/date +%s`"
+    local pass=0 fail=0 body= elapse_1= version= pids= results= db= msgid=
+    local date= subject= base= commits=
     for python in $pythons; do
+        elapse_1="`LC_ALL=C /bin/date +%s`"
         version="`sed -n "/^ *__version__ = '\\([0-9]*\\.[0-9]*\\)[^']*'*/ { s//\\1/; p; q }" "$workdir/src/trac/__init__.py"`"
         if [ $python = 24 -a "$version" != 0.12 ]; then
             continue
@@ -78,12 +81,12 @@ runtest() {
         pids=
         echo -n "  Running tests on python$python..."
         for db in $databases; do
-            cp -rp "$workdir/src" "$workdir/src-py$python-$db"
+            cp -rp "$workdir/src" "$workdir/py$python-$db"
             mkdir "$workdir/tmp-py$python-$db"
             TMP="$workdir/tmp-py$python-$db" \
-                /usr/bin/make -C "$workdir/src-py$python-$db" \
-                python=$python-$version db=$db \
-                Trac.egg-info compile stats unit-test functional-test \
+                /usr/bin/make -C "$workdir/py$python-$db" \
+                python="$python-$version" db="$db" \
+                pip-freeze Trac.egg-info compile stats unit-test functional-test \
                 >"$nrevdir/py$python-$db.log" 2>&1 &
             pids="$pids $!"
         done
@@ -92,20 +95,27 @@ runtest() {
             if wait $pid; then
                 echo -n " [PASS]"
                 results="$results [PASS]"
-                pass=$(expr $pass + 1)
+                pass=`expr $pass + 1 || :`
             else
                 echo -n " [FAIL]"
                 results="$results [FAIL]"
-                fail=$(expr $fail + 1)
+                fail=`expr $fail + 1 || :`
             fi
         done
-        rm -rf "$workdir/src-py$python"-* "$workdir/tmp-py$python"-*
-        echo
-        body="${body}Python$python$results
+        for db in $databases; do
+            (cd "$workdir" \
+                && tar cf - "py$python-$db"/*.log \
+                            "py$python-$db"/testenv/trac/log/*.html 2>/dev/null) \
+                | tar xf - -C "$nrevdir"
+        done
+        rm -rf "$workdir/py$python"-* "$workdir/tmp-py$python"-*
+        elapse_1=$(expr "`LC_ALL=C /bin/date +%s`" - $elapse_1 || :)
+        echo " in $elapse_1 seconds"
+        body="${body}Python$python$results in $elapse_1 seconds
 "
     done
     msgid="$nrev.$elapse@localhost"
-    elapse=$(expr "`LC_ALL=C /bin/date +%s`" - $elapse)
+    elapse=$(expr "`LC_ALL=C /bin/date +%s`" - $elapse || :)
     date="`date -R`"
     echo "  Passed $pass, Failed $fail in $elapse seconds at $date"
     if [ -n "$mail" ]; then
@@ -130,8 +140,25 @@ Content-Type: text/plain; charset=utf-8
 
 $subject
 
-$body
-";
+$body";
+            base=
+            commits=0
+            for branch in mirror/0.12-stable mirror/1.0-stable mirror/trunk; do
+                n="`git rev-list $nrev $branch^! | wc -l`"
+                if [ "$commits" -eq 0 -o "$n" -lt "$commits" ]; then
+                    commits="$n"
+                    base="$branch"
+                fi
+            done
+            if [ -n "$base" ]; then
+                git log --oneline --graph --decorate "$nrev" "$base^!"
+                echo "--$boundary"
+                echo "Content-Type: text/plain; name=\"$nrev.diff\""
+                echo "Content-Transfer-Encoding: qouted-printable"
+                echo "Content-Disposition: attachment; filename=\"$nrev.diff\""
+                echo
+                git log -p "$base..$nrev" | qprint -e
+            fi
             echo "--$boundary"
             echo "Content-Type: application/x-xz; name=\"$nrev.tar.xz\""
             echo "Content-Transfer-Encoding: base64"
@@ -163,9 +190,9 @@ export_and_runtest() {
     workdir="$tmpdir/$nrev"
     [ -d "$workdir" ] && rm -rf "$workdir"
     mkdir "$workdir" "$workdir/src" || :
-    git archive --prefix="$nrev/src/" "$nrev" | tar xf - -C "$tmpdir" 2>/dev/null
+    git archive --prefix="$nrev/src/" "$nrev" \
+        | tar xf - -C "$tmpdir" --touch 2>/dev/null
     cp "$dir/Makefile.cfg" "$workdir/src/Makefile.cfg"
-    /usr/bin/find "$tmpdir" -exec /bin/touch -- '{}' +
     echo " done."
     runtest "$workdir" "$nrevdir"
     rm -rf "$workdir"
