@@ -133,7 +133,7 @@ Date: $date
 Message-ID: <$msgid>
 MIME-Version: 1.0
 Content-Type: multipart/mixed; boundary=$boundary
-X-Git-Rev: $rev
+X-Git-Rev: $nrev
 
 --$boundary
 Content-Type: text/plain; charset=utf-8
@@ -150,14 +150,14 @@ $body";
                     base="$branch"
                 fi
             done
-            if [ -n "$base" ]; then
+            if [ -n "$base" -a "$commits" -gt 1 ]; then
                 git log --oneline --graph --decorate "$nrev" "$base^!"
                 echo "--$boundary"
-                echo "Content-Type: text/plain; name=\"$nrev.diff\""
-                echo "Content-Transfer-Encoding: qouted-printable"
+                echo "Content-Type: text/plain; charset=utf-8; name=\"$nrev.diff\""
+                echo "Content-Transfer-Encoding: base64"
                 echo "Content-Disposition: attachment; filename=\"$nrev.diff\""
                 echo
-                git log -p "$base..$nrev" | qprint -e
+                git log -p "$base..$nrev" | base64
             fi
             echo "--$boundary"
             echo "Content-Type: application/x-xz; name=\"$nrev.tar.xz\""
