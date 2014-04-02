@@ -38,7 +38,6 @@ mail=
 force=
 pythons='24 25 26 27'
 databases='sqlite postgres mysql'
-boundary=_BBB_OOO_UUU_NNN_DDD_AAA_RRR_YYY_
 
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -69,7 +68,7 @@ shift
 runtest() {
     local workdir="$1"
     local nrevdir="$2"
-    local elapse="`LC_ALL=C /bin/date +%s`"
+    local startts="`LC_ALL=C /bin/date +%s`"
     local pass=0 fail=0 body= elapse_1= version= pids= results= db= msgid=
     local date= subject= base= commits=
     for python in $pythons; do
@@ -114,8 +113,8 @@ runtest() {
         body="${body}Python$python$results in $elapse_1 seconds
 "
     done
-    msgid="$nrev.$elapse@localhost"
-    elapse=$(expr "`LC_ALL=C /bin/date +%s`" - $elapse || :)
+    msgid="$nrev.$startts@localhost"
+    elapse=$(expr "`LC_ALL=C /bin/date +%s`" - $startts || :)
     date="`date -R`"
     echo "  Passed $pass, Failed $fail in $elapse seconds at $date"
     if [ -n "$mail" ]; then
@@ -124,6 +123,7 @@ runtest() {
         else
             subject="PASS $pass, FAIL $fail in $elapse seconds on $rev ($nrev)"
         fi
+        boundary="__${nrev}_${startts}__"
         {
             echo "\
 From: <$mail>
@@ -132,7 +132,8 @@ To: <$mail>
 Date: $date
 Message-ID: <$msgid>
 MIME-Version: 1.0
-Content-Type: multipart/mixed; boundary=$boundary
+Content-Type: multipart/mixed;
+	boundary=$boundary
 X-Git-Rev: $nrev
 
 --$boundary
@@ -150,14 +151,18 @@ $body";
                     base="$branch"
                 fi
             done
-            if [ -n "$base" -a "$commits" -gt 1 ]; then
-                git log --oneline --graph --decorate "$nrev" "$base^!"
+            if [ -n "$base" ]; then
+                git log --oneline --left-right --decorate "$nrev"..."$base"
                 echo "--$boundary"
                 echo "Content-Type: text/plain; charset=utf-8; name=\"$nrev.diff\""
                 echo "Content-Transfer-Encoding: base64"
                 echo "Content-Disposition: attachment; filename=\"$nrev.diff\""
                 echo
-                git log -p "$base..$nrev" | base64
+                if [ "$commits" -gt 1 ]; then
+                    git log -p --left-only "$base...$nrev" | base64
+                else
+                    git show "$nrev" | base64
+                fi
             fi
             echo "--$boundary"
             echo "Content-Type: application/x-xz; name=\"$nrev.tar.xz\""
