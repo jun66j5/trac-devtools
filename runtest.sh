@@ -69,14 +69,15 @@ runtest() {
     local workdir="$1"
     local nrevdir="$2"
     local startts="`LC_ALL=C /bin/date +%s`"
-    local pass=0 fail=0 body= elapse_1= version= pids= results= db= msgid=
+    local pass=0 fail=0 body= elapse_1= require= version= pids= results= db= msgid=
     local date= subject= base= commits=
     for python in $pythons; do
         elapse_1="`LC_ALL=C /bin/date +%s`"
-        version="`sed -n "/^ *__version__ = '\\([0-9]*\\.[0-9]*\\)[^']*'*/ { s//\\1/; p; q }" "$workdir/src/trac/__init__.py"`"
-        if [ $python = 24 -a "$version" != 0.12 ]; then
+        require="`sed -n "/^min_python = (\\([2-9]\\), \\([4-9]\\))$/ { s//\\1\\2/; p; q }" "$workdir/src/setup.py"`"
+        if [ $python '<' "$require" ]; then
             continue
         fi
+        version="`sed -n "/^ *__version__ = '\\([0-9]*\\.[0-9]*\\)[^']*'*/ { s//\\1/; p; q }" "$workdir/src/trac/__init__.py"`"
         pids=
         echo -n "  Running tests on python$python..."
         for db in $databases; do
