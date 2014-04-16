@@ -37,7 +37,7 @@ update_remotes=
 mail=
 force=
 pythons='24 25 26 27'
-databases='sqlite postgres mysql'
+databases='sqlite sqlite-file postgres mysql'
 
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -153,14 +153,14 @@ $body";
                 fi
             done
             if [ -n "$base" ]; then
-                git log --oneline --left-right --decorate "$nrev"..."$base"
+                git log --oneline --left-right --decorate "$nrev" "$base^!"
                 echo "--$boundary"
                 echo "Content-Type: text/plain; charset=utf-8; name=\"$nrev.diff\""
                 echo "Content-Transfer-Encoding: base64"
                 echo "Content-Disposition: attachment; filename=\"$nrev.diff\""
                 echo
                 if [ "$commits" -gt 1 ]; then
-                    git log -p --left-only "$base...$nrev" | base64
+                    git log -p --left-only "$nrev...$base" | base64
                 else
                     git show "$nrev" | base64
                 fi
