@@ -38,12 +38,17 @@ mail=
 force=
 pythons='24 25 26 27'
 databases='sqlite sqlite-file postgres mysql'
+timezone=Europe/London
+lang=de_DE.UTF8
 
 while [ $# -gt 0 ]; do
     case "$1" in
         --python=*)             pythons="${1#--python=}" ;;
         --db=*)                 databases="${1#--db=}" ;;
         --database=*)           databases="${1#--database=}" ;;
+        --lang=*)               lang="${1#--lang=}" ;;
+        --tz=*)                 timezone="${1#--tz=}" ;;
+        --timezone=*)           timezone="${1#--timezone=}" ;;
         -F|--force)             force=1 ;;
         -A|--all-refs)          all_refs=1 ;;
         -U|--update-remotes)    update_remotes=1 ;;
@@ -83,7 +88,7 @@ runtest() {
         for db in $databases; do
             cp -rp "$workdir/src" "$workdir/py$python-$db"
             mkdir "$workdir/tmp-py$python-$db"
-            TMP="$workdir/tmp-py$python-$db" \
+            TMP="$workdir/tmp-py$python-$db" LANG="$lang" TZ="$timezone" LC_ALL= \
                 /usr/bin/make -C "$workdir/py$python-$db" \
                 python="$python-$version" db="$db" \
                 pip-freeze Trac.egg-info compile stats unit-test functional-test \
