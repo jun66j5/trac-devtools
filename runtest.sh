@@ -33,6 +33,7 @@ qprint() {
 tmpdir=/dev/shm
 all_refs=
 loop_secs=
+pidfile=
 update_remotes=
 mail=
 force=
@@ -54,6 +55,7 @@ while [ $# -gt 0 ]; do
         -U|--update-remotes)    update_remotes=1 ;;
         --mail=*)               mail="${1#--mail=}" ;;
         --loop=*)               loop_secs="${1#--loop=}" ;;
+        --pidfile=*)            pidfile="${1#--pidfile=}" ;;
         --*)                    usage ;;
         *)                      break ;;
     esac
@@ -210,13 +212,17 @@ export_and_runtest() {
 }
 
 main() {
-    [ -n "$update_remotes" ] && git fetch --quiet --all --prune
+    [ -n "$update_remotes" ] && git fetch --all --prune
     [ -n "$all_refs" ] && set `git for-each-ref --format='%(refname)'`
     for rev in "$@"; do
         export_and_runtest "$rev"
     done
 }
 
+if [ -n "$pidfile" ]; then
+    [ -f "$pidfile" ] && kill -0 "`cat "$pidfile"`" 2>/dev/null && exit 0
+    echo -n $$ >"$pidfile"
+fi
 main "$@"
 if [ -n "$loop_secs" ]; then
     while :; do
