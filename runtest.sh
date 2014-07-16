@@ -91,10 +91,17 @@ runtest() {
             cp -rp "$workdir/src" "$workdir/py$python-$db"
             mkdir "$workdir/tmp-py$python-$db"
             TMP="$workdir/tmp-py$python-$db" LANG="$lang" TZ="$timezone" LC_ALL= \
-                /usr/bin/make -C "$workdir/py$python-$db" \
-                python="$python-$version" db="$db" \
-                pip-freeze Trac.egg-info compile stats unit-test functional-test \
-                >"$nrevdir/py$python-$db.log" 2>&1 &
+                /bin/sh -c "
+                    set -ex
+                    cd $workdir/py$python-$db
+                    /usr/bin/make \
+                        python=$python-$version db=$db \
+                        pip-freeze Trac.egg-info compile stats unit-test functional-test
+                    for i in babel configobj pytz; do
+                        echo 'raise ImportError' >\$i.py
+                    done
+                    /usr/bin/make python=$python-$version db=$db unit-test
+                " >"$nrevdir/py$python-$db.log" 2>&1 &
             pids="$pids $!"
         done
         results=
