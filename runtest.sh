@@ -75,6 +75,8 @@ shift
 runtest() {
     local workdir="$1"
     local nrevdir="$2"
+    local rev="$3"
+    local nrev="$4"
     local startts="`LC_ALL=C /bin/date +%s`"
     local pass=0 fail=0 body= elapse_1= require= version= pids= results= db= msgid=
     local date= subject= base= commits=
@@ -133,10 +135,14 @@ runtest() {
     date="`date -R`"
     echo "  Passed $pass, Failed $fail in $elapse seconds at $date"
     if [ -n "$mail" ]; then
-        if [ "$rev" = "$nrev" ]; then
-            subject="PASS $pass, FAIL $fail in $elapse seconds on $rev"
+        rev="${rev#refs/remotes/}"
+        if [ "$fail" = 0 ]; then
+            subject="PASS $pass in $elapse seconds on $rev"
         else
-            subject="PASS $pass, FAIL $fail in $elapse seconds on $rev ($nrev)"
+            subject="FAIL $fail, PASS $pass in $elapse seconds on $rev"
+        fi
+        if [ "$rev" != "$nrev" ]; then
+            subject="$subject ($nrev)"
         fi
         boundary="__${nrev}_${startts}__"
         {
@@ -191,9 +197,9 @@ $body";
 }
 
 export_and_runtest() {
-    rev="$1"
-    nrev="`git rev-list "$rev^!" --`"
-    nrevdir="$dir/tests/$nrev"
+    local rev="$1"
+    local nrev="`git rev-list "$rev^!" --`"
+    local nrevdir="$dir/tests/$nrev"
     [ -z "$nrev" ] && return 0
     if [ -d "$nrevdir" ]; then
         [ -z "$force" ] && return 0
@@ -214,7 +220,7 @@ export_and_runtest() {
         | tar xf - -C "$tmpdir" --touch 2>/dev/null
     cp "$dir/Makefile.cfg" "$workdir/src/Makefile.cfg"
     echo " done."
-    runtest "$workdir" "$nrevdir"
+    runtest "$workdir" "$nrevdir" "$rev" "$nrev"
     rm -rf "$workdir"
 }
 
