@@ -3,6 +3,7 @@
 set -e
 arcdir="$HOME/arc"
 venvroot="$HOME/venv"
+repos_root=http://svn.edgewall.org/repos/trac
 
 LC_ALL=en_US.UTF8
 TMP=/dev/shm/tmp
@@ -19,6 +20,7 @@ fi
 
 for i in "$@"; do
     repos=
+    tracver=
     case "$i" in
     0.11|0.11.*)
         pyminor=4
@@ -32,12 +34,34 @@ for i in "$@"; do
     1.1|1.1.*)
         pyminor=6
         ;;
+    0.11-stable)
+        pyminor=4
+        tracver=0.11
+        repos=$repos_root/branches/0.11-stable
+        ;;
+    0.12-stable)
+        pyminor=4
+        tracver=0.12
+        repos=$repos_root/branches/0.12-stable
+        ;;
+    1.0-stable)
+        pyminor=5
+        tracver=1.0
+        repos=$repos_root/branches/1.0-stable
+        ;;
+    trunk)
+        pyminor=6
+        tracver=1.1
+        repos=$repos_root/trunk
+        ;;
     *)
         echo "Skipped '$i'"
         continue
         ;;
     esac
-    tracver=`expr "$i" : "\\([0-9]*[.][0-9]*\\)"`
+    if [ -z "$tracver" ]; then
+        tracver=`expr "$i" : "\\([0-9]*[.][0-9]*\\)"`
+    fi
     pyver=py2$pyminor
     pyname=python2.$pyminor
     venvdir="$venvroot/trac/$i"
@@ -53,7 +77,14 @@ for i in "$@"; do
         ln -s ../../../../../$pyver-$tracver/lib/$pyname/site-packages/genshi .
         ln -s ../../../../../$pyver-$tracver/lib/$pyname/site-packages/Genshi-*.egg-info .
     )
-    "$venvdir/bin/pip" install -q --download-cache="$HOME/arc/pip" "http://download.edgewall.org/trac/Trac-$i.tar.gz"
+    if [ -n "$repos" ]; then
+        tmpdir="`mktemp -d -p $TMP`"
+        svn co -q "$repos" "$tmpdir" || :
+        "$venvdir/bin/pip" install -q --download-cache="$HOME/arc/pip" "$tmpdir" || :
+        rm -rf "$tmpdir"
+    else
+        "$venvdir/bin/pip" install -q --download-cache="$HOME/arc/pip" "http://download.edgewall.org/trac/Trac-$i.tar.gz"
+    fi
     "$venvdir/bin/python" -c 'from trac import __version__'
     echo " done."
 done
