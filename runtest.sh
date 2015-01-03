@@ -99,8 +99,8 @@ runtest() {
                     /usr/bin/make \
                         python=$python-$version db=$db \
                         pip-freeze Trac.egg-info compile stats unit-test functional-test
-                    for i in babel configobj pytz; do
-                        echo 'raise ImportError' >\$i.py
+                    for i in babel configobj docutils pytz pygments svn; do
+                        echo 'raise ImportError(\"No module named \" + __name__)' >\$i.py
                     done
                     /usr/bin/make python=$python-$version db=$db unit-test
                 " >"$nrevdir/py$python-$db.log" 2>&1 &
