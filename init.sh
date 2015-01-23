@@ -46,7 +46,8 @@ for i in "$@"; do
             ;;
         *)
             "$venvdir/bin/pip" install -q --download-cache="$HOME/arc/pip" \
-                psycopg2 Babel configobj
+                psycopg2 Babel configobj sphinx
+            "$venvdir/bin/pip" uninstall -q -y sphinx
         esac
 
         rm -rf "$TMP/swig-1.3.40"
@@ -75,6 +76,10 @@ for i in "$@"; do
             cd "$venvdir/lib/$pyname/site-packages"
             ln -s ../../../../$pyver/lib/$pyname/site-packages/* .
         )
+        case "$i" in
+        py2[67]-*.*)
+            "$venvdir/bin/pip" install -q --download-cache="$HOME/arc/pip" sphinx
+        esac
         ;;
     esac
 
