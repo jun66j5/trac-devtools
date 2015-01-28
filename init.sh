@@ -67,15 +67,13 @@ for i in "$@"; do
         "$python" -c 'from svn import core'
         rm -rf "$TMP/swig-1.3.40" "$TMP/subversion-1.6.23"
         ;;
+
     py2?-*.*)
         pyminor=`expr "$i" : "py2\\([4-7]\\)"`
         pyver=py2$pyminor
         pyname=python2.$pyminor
-        rm -rf "$venvdir/lib/$pyname/site-packages"/*
-        (
-            cd "$venvdir/lib/$pyname/site-packages"
-            ln -s ../../../../$pyver/lib/$pyname/site-packages/* .
-        )
+        rm -rf "$venvdir/lib/$pyname/site-packages"
+        cp -al "$venvroot/$pyver/lib/$pyname/site-packages" "$venvdir/lib/$pyname/site-packages"
         case "$i" in
         py2[67]-*.*)
             "$venvdir/bin/pip" install -q --download-cache="$HOME/arc/pip" sphinx

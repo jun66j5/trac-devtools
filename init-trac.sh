@@ -69,14 +69,12 @@ for i in "$@"; do
     rm -rf "$venvdir"
     /usr/bin/virtualenv -q -p /usr/bin/$pyname --unzip-setuptools \
         --never-download "$venvdir"
-    rm -rf "$venvdir/lib/$pyname/site-packages"/*
-    test -d "$venvroot/$pyver-$tracver/lib/$pyname/site-packages"
-    (
-        cd "$venvdir/lib/$pyname/site-packages"
-        ln -s ../../../../../$pyver/lib/$pyname/site-packages/* .
-        ln -s ../../../../../$pyver-$tracver/lib/$pyname/site-packages/genshi .
-        ln -s ../../../../../$pyver-$tracver/lib/$pyname/site-packages/Genshi-*.egg-info .
-    )
+    rm -rf "$venvdir/lib/$pyname/site-packages"
+    cp -al "$venvroot/$pyver/lib/$pyname/site-packages" \
+           "$venvdir/lib/$pyname/site-packages"
+    cp -al "$venvroot/$pyver-$tracver/lib/$pyname/site-packages/genshi" \
+           "$venvroot/$pyver-$tracver/lib/$pyname/site-packages/Genshi"-*.egg-info \
+           "$venvdir/lib/$pyname/site-packages"
     if [ -n "$repos" ]; then
         tmpdir="`mktemp -d -p $TMP`"
         svn co -q "$repos" "$tmpdir" || :
