@@ -197,9 +197,10 @@ $body";
 }
 
 export_and_runtest() {
-    local rev="$1"
-    local nrev="`git rev-list "$rev^!" --`"
-    local nrevdir="$dir/tests/$nrev"
+    local rev="$1" nrevdir="$dir/tests/$rev" nrev=
+    [ -d "$nrevdir" ] && return 0
+    nrev="`git rev-list "$rev^!" --`"
+    nrevdir="$dir/tests/$nrev"
     [ -z "$nrev" ] && return 0
     if [ -d "$nrevdir" ]; then
         [ -z "$force" ] && return 0
