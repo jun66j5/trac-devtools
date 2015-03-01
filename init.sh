@@ -34,11 +34,11 @@ for i in "$@"; do
     case "$i" in
     py2?)
         "$venvdir/bin/pip" install -q --download-cache="$HOME/arc/pip" \
-            MySQL-python Pygments docutils lxml pytz twill==0.9.1
+            pysqlite MySQL-python Pygments docutils lxml pytz twill==0.9.1
         case "$i" in
         py24*)
             "$venvdir/bin/pip" install -q --download-cache="$HOME/arc/pip" \
-                pysqlite psycopg2==2.4.6 Babel==0.9.6 configobj==4.7.2
+                psycopg2==2.4.6 Babel==0.9.6 configobj==4.7.2
             ;;
         py25*)
             "$venvdir/bin/pip" install -q --download-cache="$HOME/arc/pip" \
@@ -46,8 +46,8 @@ for i in "$@"; do
             ;;
         *)
             "$venvdir/bin/pip" install -q --download-cache="$HOME/arc/pip" \
-                psycopg2 Babel configobj sphinx
-            "$venvdir/bin/pip" uninstall -q -y sphinx
+                psycopg2 Babel configobj
+            ;;
         esac
 
         rm -rf "$TMP/swig-1.3.40"
