@@ -10,11 +10,11 @@ export TMP LC_ALL
 [ -d "$TMP" ] || mkdir -m 1777 "$TMP"
 
 if [ $# -eq 0 ]; then
-    set py24 py25 py26 py27 \
-        py24-0.11 py25-0.11 py26-0.11 py27-0.11 \
-        py24-0.12 py25-0.12 py26-0.12 py27-0.12 \
-        py25-1.0  py26-1.0  py27-1.0 \
-        py25-1.1  py26-1.1  py27-1.1
+    set py27      py26      py25      py24 \
+        py27-0.11 py26-0.11 py25-0.11 py24-0.11 \
+        py27-0.12 py26-0.12 py25-0.12 py24-0.12 \
+        py27-1.0  py26-1.0  py25-1.0 \
+        py27-1.1  py26-1.1  py25-1.1
 fi
 
 for i in "$@"; do
