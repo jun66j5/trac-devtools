@@ -6,16 +6,16 @@ venvroot="$HOME/venv"
 repos_root=http://svn.edgewall.org/repos/trac
 
 LC_ALL=en_US.UTF8
-TMP=/dev/shm/tmp
+TMP=/dev/shm
 export TMP LC_ALL
 
 cd "$HOME"
 
 if [ $# -eq 0 ]; then
-    set 0.11 0.11.1 0.11.2 0.11.3 0.11.4 0.11.5 0.11.6 0.11.7 \
-        0.12 0.12.1 0.12.2 0.12.3 0.12.4 0.12.5 0.12.6 \
-        1.0 1.0.1 1.0.2 1.0.3 1.0.4 \
-        1.1.1 1.1.2 1.1.3
+    set 0.11  0.11.1 0.11.2 0.11.3 0.11.4 0.11.5 0.11.6 0.11.7 \
+        0.12  0.12.1 0.12.2 0.12.3 0.12.4 0.12.5 0.12.6 \
+        1.0   1.0.1  1.0.2  1.0.3  1.0.4  1.0.5 \
+        1.1.1 1.1.2  1.1.3  1.1.4
 fi
 
 for i in "$@"; do
@@ -83,6 +83,5 @@ for i in "$@"; do
     else
         "$venvdir/bin/pip" install -q --download-cache="$HOME/arc/pip" "http://download.edgewall.org/trac/Trac-$i.tar.gz"
     fi
-    "$venvdir/bin/python" -c 'from trac import __version__'
-    echo " done."
+    "$venvdir/bin/python" -c 'from trac import __version__; print " Trac %s is installed." % __version__'
 done
