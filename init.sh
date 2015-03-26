@@ -1,11 +1,11 @@
 #! /bin/sh
 
-set -ex
+set -e
 arcdir="$HOME/arc"
 venvroot="$HOME/venv"
 
 LC_ALL=en_US.UTF8
-TMP=/dev/shm/tmp
+TMP=/dev/shm
 export TMP LC_ALL
 [ -d "$TMP" ] || mkdir -m 1777 "$TMP"
 
@@ -34,19 +34,25 @@ for i in "$@"; do
     case "$i" in
     py2?)
         "$venvdir/bin/pip" install -q --download-cache="$HOME/arc/pip" \
-            pysqlite MySQL-python Pygments docutils lxml pytz twill==0.9.1
+            pysqlite MySQL-python Pygments docutils pytz twill==0.9.1
         case "$i" in
-        py24*)
+        py24)
             "$venvdir/bin/pip" install -q --download-cache="$HOME/arc/pip" \
-                psycopg2==2.4.6 Babel==0.9.6 configobj==4.7.2
+                psycopg2==2.4.6 Babel==0.9.6 configobj==4.7.2 coverage==3.7.1 \
+                'lxml<3.4.0'
             ;;
-        py25*)
+        py25)
             "$venvdir/bin/pip" install -q --download-cache="$HOME/arc/pip" \
-                psycopg2==2.5.2 Babel==0.9.6 configobj==4.7.2
+                psycopg2==2.5.2 Babel==0.9.6 configobj==4.7.2 coverage==3.7.1 \
+                'lxml<3.4.0'
             ;;
-        *)
+        py26)
             "$venvdir/bin/pip" install -q --download-cache="$HOME/arc/pip" \
-                psycopg2 Babel configobj
+                psycopg2 Babel configobj coverage lxml
+            ;;
+        py27)
+            "$venvdir/bin/pip" install -q --download-cache="$HOME/arc/pip" \
+                psycopg2 Babel configobj coverage lxml html2rest sphinx
             ;;
         esac
 
@@ -74,10 +80,13 @@ for i in "$@"; do
         pyname=python2.$pyminor
         rm -rf "$venvdir/lib/$pyname/site-packages"
         cp -al "$venvroot/$pyver/lib/$pyname/site-packages" "$venvdir/lib/$pyname/site-packages"
-        case "$i" in
-        py2[67]-*.*)
-            "$venvdir/bin/pip" install -q --download-cache="$HOME/arc/pip" sphinx
-        esac
+        for f in "$venvroot/$pyver"/bin/*; do
+            if [ "`head -1 \"$f\"`" = "#!$venvroot/$pyver/bin/$pyname" ]; then
+                t="$venvdir/bin/`basename \"$f\"`"
+                { echo "#!$venvdir/bin/$pyname"; tail -n +2 "$f"; } >"$t"
+                chmod --reference="$f" "$t"
+            fi
+        done
         ;;
     esac
 
