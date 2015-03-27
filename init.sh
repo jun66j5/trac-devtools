@@ -34,25 +34,26 @@ for i in "$@"; do
     case "$i" in
     py2?)
         "$venvdir/bin/pip" install -q --download-cache="$HOME/arc/pip" \
-            pysqlite MySQL-python Pygments docutils pytz twill==0.9.1
+            pysqlite MySQL-python docutils pytz twill==0.9.1
         case "$i" in
         py24)
             "$venvdir/bin/pip" install -q --download-cache="$HOME/arc/pip" \
                 psycopg2==2.4.6 Babel==0.9.6 configobj==4.7.2 coverage==3.7.1 \
-                'lxml<3.4.0'
+                'lxml<3.4.0dev' 'Pygments<2.0dev'
             ;;
         py25)
             "$venvdir/bin/pip" install -q --download-cache="$HOME/arc/pip" \
                 psycopg2==2.5.2 Babel==0.9.6 configobj==4.7.2 coverage==3.7.1 \
-                'lxml<3.4.0'
+                'lxml<3.4.0dev' 'Pygments<2.0dev'
             ;;
         py26)
             "$venvdir/bin/pip" install -q --download-cache="$HOME/arc/pip" \
-                psycopg2 Babel configobj coverage lxml
+                psycopg2 Babel configobj coverage lxml Pygments
             ;;
         py27)
             "$venvdir/bin/pip" install -q --download-cache="$HOME/arc/pip" \
-                psycopg2 Babel configobj coverage lxml html2rest sphinx
+                psycopg2 Babel configobj coverage lxml Pygments html2rest \
+                sphinx
             ;;
         esac
 
