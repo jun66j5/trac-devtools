@@ -75,6 +75,15 @@ for i in "$@"; do
     cp -al "$venvroot/$pyver-$tracver/lib/$pyname/site-packages/genshi" \
            "$venvroot/$pyver-$tracver/lib/$pyname/site-packages/Genshi"-*.egg-info \
            "$venvdir/lib/$pyname/site-packages"
+    for f in "$venvroot/$pyver"/bin/*; do
+        t="$venvdir/bin/`basename \"$f\"`"
+        if [ "`head -1 \"$f\"`" = "#!$venvroot/$pyver/bin/$pyname" ]; then
+            { echo "#!$venvdir/bin/$pyname"; tail -n +2 "$f"; } >"$t"
+            chmod --reference="$f" "$t"
+        elif [ ! -f "$t" ]; then
+            ln "$f" "$t"
+        fi
+    done
     if [ -n "$repos" ]; then
         tmpdir="`mktemp -d -p $TMP`"
         svn co -q "$repos" "$tmpdir" || :

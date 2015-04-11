@@ -34,7 +34,7 @@ for i in "$@"; do
     case "$i" in
     py2?)
         "$venvdir/bin/pip" install -q --download-cache="$HOME/arc/pip" \
-            pysqlite MySQL-python docutils pytz twill==0.9.1
+            pysqlite MySQL-python docutils pytz twill==0.9.1 uWSGI
         case "$i" in
         py24)
             "$venvdir/bin/pip" install -q --download-cache="$HOME/arc/pip" \
@@ -82,10 +82,12 @@ for i in "$@"; do
         rm -rf "$venvdir/lib/$pyname/site-packages"
         cp -al "$venvroot/$pyver/lib/$pyname/site-packages" "$venvdir/lib/$pyname/site-packages"
         for f in "$venvroot/$pyver"/bin/*; do
+            t="$venvdir/bin/`basename \"$f\"`"
             if [ "`head -1 \"$f\"`" = "#!$venvroot/$pyver/bin/$pyname" ]; then
-                t="$venvdir/bin/`basename \"$f\"`"
                 { echo "#!$venvdir/bin/$pyname"; tail -n +2 "$f"; } >"$t"
                 chmod --reference="$f" "$t"
+            elif [ ! -f "$t" ]; then
+                ln "$f" "$t"
             fi
         done
         ;;
