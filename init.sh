@@ -34,7 +34,7 @@ for i in "$@"; do
     case "$i" in
     py2?)
         "$venvdir/bin/pip" install -q --download-cache="$HOME/arc/pip" \
-            pysqlite MySQL-python docutils pytz twill==0.9.1 uWSGI
+            mercurial pysqlite MySQL-python docutils pytz twill==0.9.1 uWSGI
         case "$i" in
         py24)
             "$venvdir/bin/pip" install -q --download-cache="$HOME/arc/pip" \
