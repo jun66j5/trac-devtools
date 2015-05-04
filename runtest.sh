@@ -81,28 +81,48 @@ runtest() {
     local pass=0 fail=0 body= elapse_1= require= version= pids= results= db= msgid=
     local date= subject= base= commits=
     for python in $pythons; do
-        elapse_1="`LC_ALL=C /bin/date +%s`"
         require="`sed -n "/^min_python = (\\([2-9]\\), \\([4-9]\\))$/ { s//\\1\\2/; p; q }" "$workdir/src/setup.py"`"
         if [ $python '<' "$require" ]; then
             continue
         fi
+        elapse_1="`LC_ALL=C /bin/date +%s`"
+        dbname="trac_$elapse_1"
         version="`sed -n "/^ *__version__ = '\\([0-9]*\\.[0-9]*\\)[^']*'*/ { s//\\1/; p; q }" "$workdir/src/trac/__init__.py"`"
         pids=
         echo -n "  Running tests on python$python..."
         for db in $databases; do
-            cp -rp "$workdir/src" "$workdir/py$python-$db"
+            case "$db" in
+            sqlite)
+                uri=
+                ;;
+            sqlite-file)
+                uri=sqlite:trac.db
+                ;;
+            postgres)
+                uri="postgres://tracuser:password@127.0.0.1/trac?schema=$dbname"
+                ;;
+            mysql)
+                uri="mysql://tracuser:password@127.0.0.1/$dbname"
+                mysql -utracuser -ppassword mysql \
+                    -e "CREATE DATABASE $dbname DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin"
+                ;;
+            esac
+            cp -al "$workdir/src" "$workdir/py$python-$db"
+            rm "$workdir/py$python-$db/Makefile.cfg"
+            sed -e "s|^\\.uri *=.*|.uri = $uri|" "$workdir/src/Makefile.cfg" \
+                >"$workdir/py$python-$db/Makefile.cfg"
             mkdir "$workdir/tmp-py$python-$db"
             TMP="$workdir/tmp-py$python-$db" LANG="$lang" TZ="$timezone" LC_ALL= \
                 /bin/sh -c "
                     set -ex
                     cd $workdir/py$python-$db
                     /usr/bin/make \
-                        python=$python-$version db=$db \
+                        python=$python-$version \
                         pip-freeze Trac.egg-info compile stats unit-test functional-test
                     for i in babel configobj docutils pytz pygments svn; do
                         echo 'raise ImportError(\"No module named \" + __name__)' >\$i.py
                     done
-                    /usr/bin/make python=$python-$version db=$db unit-test
+                    /usr/bin/make python=$python-$version unit-test
                 " >"$nrevdir/py$python-$db.log" 2>&1 &
             pids="$pids $!"
         done
@@ -127,6 +147,18 @@ runtest() {
         rm -rf "$workdir/py$python"-* "$workdir/tmp-py$python"-*
         elapse_1=$(expr "`LC_ALL=C /bin/date +%s`" - $elapse_1 || :)
         echo " in $elapse_1 seconds"
+        for db in $databases; do
+            case "$db" in
+            postgres)
+                PGPASSWORD=password psql -h 127.0.0.1 -U tracuser trac \
+                    -c "DROP SCHEMA $dbname CASCADE" || :
+                ;;
+            mysql)
+                mysql -h127.0.0.1 -utracuser -ppassword mysql \
+                    -e "DROP DATABASE $dbname" || :
+                ;;
+            esac
+        done
         body="${body}Python$python$results in $elapse_1 seconds
 "
     done
