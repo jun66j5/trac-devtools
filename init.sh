@@ -48,12 +48,13 @@ for i in "$@"; do
             ;;
         py26)
             "$venvdir/bin/pip" install -q --download-cache="$HOME/arc/pip" \
-                psycopg2 Babel configobj coverage lxml Pygments
+                psycopg2 Babel configobj coverage lxml Pygments \
+                memory_profiler psutil
             ;;
         py27)
             "$venvdir/bin/pip" install -q --download-cache="$HOME/arc/pip" \
                 psycopg2 Babel configobj coverage lxml Pygments html2rest \
-                sphinx
+                sphinx memory_profiler psutil
             ;;
         esac
 
