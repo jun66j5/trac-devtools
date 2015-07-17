@@ -151,7 +151,7 @@ runtest() {
             case "$db" in
             postgres)
                 PGPASSWORD=password psql -h 127.0.0.1 -U tracuser trac \
-                    -c "DROP SCHEMA $dbname CASCADE" || :
+                    -c "DROP SCHEMA $dbname CASCADE" >/dev/null || :
                 ;;
             mysql)
                 mysql -h127.0.0.1 -utracuser -ppassword mysql \
