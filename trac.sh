@@ -78,6 +78,21 @@ modwsgi)
     export _PWD _VENVDIR _TMPDIR TRAC_ENV
     /usr/sbin/apache2 -X -f "${_PWD}modwsgi.conf"
     ;;
+modpython)
+    if [ ! -d "$venv/lib/python2.7" ]; then
+        echo "Require python2.7, $venv is using `cd \"$venv\"/lib && echo python2.?`."
+        exit 1
+    fi
+    . "$venv/bin/activate"
+    tmpdir=`mktemp -d /dev/shm/modpython-XXXXXX`
+    trap _cleanup 0 1 2 3 15
+    _PWD="`_dirname`"
+    _VENVDIR="$venv"
+    _TMPDIR="$tmpdir"
+    TRAC_ENV="$1"
+    export _PWD _VENVDIR _TMPDIR TRAC_ENV
+    /usr/sbin/apache2 -X -f "${_PWD}modpython.conf"
+    ;;
 python)
     exec "$venv/bin/python"
     ;;
