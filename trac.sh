@@ -76,7 +76,7 @@ modwsgi)
     _TMPDIR="$tmpdir"
     TRAC_ENV="$1"
     export _PWD _VENVDIR _TMPDIR TRAC_ENV
-    /usr/sbin/apache2 -X -f "${_PWD}modwsgi.conf"
+    /usr/sbin/apache2 -DFOREGROUND -f "${_PWD}modwsgi.conf"
     ;;
 modpython)
     if [ ! -d "$venv/lib/python2.7" ]; then
@@ -91,7 +91,7 @@ modpython)
     _TMPDIR="$tmpdir"
     TRAC_ENV="$1"
     export _PWD _VENVDIR _TMPDIR TRAC_ENV
-    /usr/sbin/apache2 -X -f "${_PWD}modpython.conf"
+    /usr/sbin/apache2 -DFOREGROUND -f "${_PWD}modpython.conf"
     ;;
 python)
     exec "$venv/bin/python"
