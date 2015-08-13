@@ -19,38 +19,50 @@ if [ $# -eq 0 ]; then
 fi
 
 for i in "$@"; do
+    venvdir="$venvroot/trac/$i"
     repos=
     tracver=
+    pyminor=
+    case "$i" in
+    py[23][0-9]/*)
+        pyminor=`expr "$i" : "py2\\([0-9]\\)"`
+        i="${i#py[23][0-9]/}"
+        ;;
+    py*)
+        echo "Skipped '$i'"
+        continue
+        ;;
+    esac
     case "$i" in
     0.11|0.11.*)
-        pyminor=4
+        [ -z "$pyminor" ] && pyminor=4
         ;;
     0.12|0.12.*)
-        pyminor=4
+        [ -z "$pyminor" ] && pyminor=4
         ;;
     1.0|1.0.*)
-        pyminor=5
+        [ -z "$pyminor" ] && pyminor=5
         ;;
     1.1|1.1.*)
-        pyminor=6
+        [ -z "$pyminor" ] && pyminor=6
         ;;
     0.11-stable)
-        pyminor=4
+        [ -z "$pyminor" ] && pyminor=4
         tracver=0.11
         repos=$repos_root/branches/0.11-stable
         ;;
     0.12-stable)
-        pyminor=4
+        [ -z "$pyminor" ] && pyminor=4
         tracver=0.12
         repos=$repos_root/branches/0.12-stable
         ;;
     1.0-stable)
-        pyminor=5
+        [ -z "$pyminor" ] && pyminor=5
         tracver=1.0
         repos=$repos_root/branches/1.0-stable
         ;;
     trunk)
-        pyminor=6
+        [ -z "$pyminor" ] && pyminor=6
         tracver=1.1
         repos=$repos_root/trunk
         ;;
@@ -64,7 +76,6 @@ for i in "$@"; do
     fi
     pyver=py2$pyminor
     pyname=python2.$pyminor
-    venvdir="$venvroot/trac/$i"
     echo -n "Creating $venvdir..."
     rm -rf "$venvdir"
     /usr/bin/virtualenv -q -p /usr/bin/$pyname --unzip-setuptools \
