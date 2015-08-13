@@ -70,12 +70,16 @@ modwsgi)
     fi
     tmpdir=`mktemp -d /dev/shm/modwsgi-XXXXXX`
     trap _cleanup 0 1 2 3 15
-    echo 'from trac.web.main import dispatch_request as application' >$tmpdir/trac.wsgi
+    cat <<__EOS__ >$tmpdir/trac.wsgi
+from trac.web.main import dispatch_request
+def application(environ, start_response):
+    environ['trac.env_paths'] = ['$1']
+    return dispatch_request(environ, start_response)
+__EOS__
     _PWD="`_dirname`"
     _VENVDIR="$venv"
     _TMPDIR="$tmpdir"
-    TRAC_ENV="$1"
-    export _PWD _VENVDIR _TMPDIR TRAC_ENV
+    export _PWD _VENVDIR _TMPDIR
     /usr/sbin/apache2 -DFOREGROUND -f "${_PWD}modwsgi.conf"
     ;;
 modpython)
