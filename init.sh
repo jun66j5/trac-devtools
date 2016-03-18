@@ -34,27 +34,27 @@ for i in "$@"; do
     case "$i" in
     py2?)
         "$venvdir/bin/pip" install -q --download-cache="$HOME/arc/pip" \
-            mercurial pysqlite MySQL-python docutils pytz twill==0.9.1 uWSGI
+            mercurial MySQL-python docutils pytz twill==0.9.1 uWSGI
         case "$i" in
         py24)
             "$venvdir/bin/pip" install -q --download-cache="$HOME/arc/pip" \
                 psycopg2==2.4.6 Babel==0.9.6 configobj==4.7.2 coverage==3.7.1 \
-                'lxml<3.4.0dev' 'Pygments<2.0dev'
+                'pysqlite<2.8.0' 'lxml<3.4.0dev' 'Pygments<2.0dev'
             ;;
         py25)
             "$venvdir/bin/pip" install -q --download-cache="$HOME/arc/pip" \
                 psycopg2==2.5.2 Babel==0.9.6 configobj==4.7.2 coverage==3.7.1 \
-                'lxml<3.4.0dev' 'Pygments<2.0dev'
+                'pysqlite<2.8.0' 'lxml<3.4.0dev' 'Pygments<2.0dev'
             ;;
         py26)
             "$venvdir/bin/pip" install -q --download-cache="$HOME/arc/pip" \
-                psycopg2 Babel configobj coverage lxml Pygments \
-                memory_profiler psutil
+                psycopg2 Babel Jinja2 configobj coverage lxml Pygments \
+                'pysqlite<2.8.0' memory_profiler psutil
             ;;
         py27)
             "$venvdir/bin/pip" install -q --download-cache="$HOME/arc/pip" \
-                psycopg2 Babel configobj coverage lxml Pygments html2rest \
-                sphinx memory_profiler psutil
+                psycopg2 Babel Jinja2 configobj coverage lxml Pygments \
+                pysqlite html2rest sphinx memory_profiler psutil
             ;;
         esac
 
