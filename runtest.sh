@@ -96,7 +96,7 @@ runtest() {
                 uri=
                 ;;
             sqlite-file)
-                uri=sqlite:trac.db
+                uri=sqlite:test.db
                 ;;
             postgres)
                 uri="postgres://tracuser:password@127.0.0.1/trac?schema=$dbname"
@@ -119,7 +119,7 @@ runtest() {
                     /usr/bin/make \
                         python=$python-$version \
                         pip-freeze Trac.egg-info compile stats unit-test functional-test
-                    for i in babel configobj docutils pytz pygments svn; do
+                    for i in babel configobj docutils pytz pygments svn pysqlite2; do
                         echo 'raise ImportError(\"No module named \" + __name__)' >\$i.py
                     done
                     /usr/bin/make python=$python-$version unit-test
