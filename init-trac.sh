@@ -78,8 +78,19 @@ for i in "$@"; do
     pyname=python2.$pyminor
     echo -n "Creating $venvdir..."
     rm -rf "$venvdir"
-    /usr/bin/virtualenv -q -p /usr/bin/$pyname --unzip-setuptools \
-        --never-download "$venvdir"
+    case "$pyver" in
+    py2[45])
+        rm -rf "$TMP/virtualenv-1.7.2"
+        tar xzf "$arcdir/virtualenv-1.7.2.tar.gz" -C "$TMP"
+        PYTHONPATH="$TMP/virtualenv-1.7.2" "/usr/bin/$pyname" -m virtualenv \
+            -q -p "$python" --unzip-setuptools --never-download "$venvdir"
+        rm -rf "$TMP/virtualenv-1.7.2"
+        ;;
+    *)
+        /usr/bin/virtualenv -q -p /usr/bin/$pyname --unzip-setuptools \
+            --never-download "$venvdir"
+        ;;
+    esac
     rm -rf "$venvdir/lib/$pyname/site-packages"
     cp -al "$venvroot/$pyver/lib/$pyname/site-packages" \
            "$venvdir/lib/$pyname/site-packages"
