@@ -51,8 +51,16 @@ for i in "$@"; do
         py24)
             "$venvdir/bin/pip" install -q --download-cache="$HOME/arc/pip" \
                 psycopg2==2.4.6 Babel==0.9.6 configobj==4.7.2 coverage==3.7.1 \
-                mercurial==3.4.2 'pysqlite<2.8.0' 'lxml<3.4.0dev' \
-                'Pygments<2.0dev'
+                mercurial==3.4.2 'lxml<3.4.0dev' 'Pygments<2.0dev'
+            pysqlite_version=2.5.6
+            sqlite_version=3071501
+            tar xzf "$HOME/arc/pysqlite-${pysqlite_version}.tar.gz" -C "$TMP"
+            unzip -x "$HOME/arc/sqlite-amalgamation-${sqlite_version}.zip" -d "$TMP/pysqlite-2.5.6"
+            (
+                cd "$TMP/pysqlite-${pysqlite_version}"
+                mv "sqlite-amalgamation-${sqlite_version}" amalgamation
+                "$venvdir/bin/python" setup.py build_static install
+            )
             ;;
         py25)
             "$venvdir/bin/pip" install -q --download-cache="$HOME/arc/pip" \
