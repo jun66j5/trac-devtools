@@ -71,6 +71,14 @@ nginx-tracd)
     trap "nginx -c \"$conf\" -s stop" INT
     TRAC_ENV="$1" "$venv/bin/tracd" -p 3001 -s --basic-auth "*,$passwd,auth" "$@"
     ;;
+nginx-fcgi)
+    dir="`_dirname`"
+    passwd="$dir/htpasswd.txt"
+    conf="$dir/nginx-fcgi.conf"
+    nginx -c "$conf"
+    trap "nginx -c \"$conf\" -s stop" INT
+    TRAC_ENV="$1" "$venv/bin/python" trac.fcgi /dev/shm/nginx.fastcgi.sock
+    ;;
 modwsgi)
     if [ ! -d "$venv/lib/python2.7" ]; then
         echo "Require python2.7, $venv is using `cd \"$venv\"/lib && echo python2.?`."
