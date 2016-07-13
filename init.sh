@@ -15,7 +15,8 @@ if [ $# -eq 0 ]; then
         py27-0.11 py26-0.11 py25-0.11 py24-0.11 \
         py27-0.12 py26-0.12 py25-0.12 py24-0.12 \
         py27-1.0  py26-1.0  py25-1.0 \
-        py27-1.1  py26-1.1
+        py27-1.2  py26-1.2 \
+        py27-1.3
 fi
 
 for i in "$@"; do
@@ -55,12 +56,13 @@ for i in "$@"; do
             pysqlite_version=2.5.6
             sqlite_version=3071501
             tar xzf "$HOME/arc/pysqlite-${pysqlite_version}.tar.gz" -C "$TMP"
-            unzip -x "$HOME/arc/sqlite-amalgamation-${sqlite_version}.zip" -d "$TMP/pysqlite-2.5.6"
             (
                 cd "$TMP/pysqlite-${pysqlite_version}"
+                unzip -x "$HOME/arc/sqlite-amalgamation-${sqlite_version}.zip"
                 mv "sqlite-amalgamation-${sqlite_version}" amalgamation
                 "$venvdir/bin/python" setup.py build_static install
             )
+            rm -rf "$TMP/pysqlite-${pysqlite_version}"
             ;;
         py25)
             "$venvdir/bin/pip" install -q --download-cache="$HOME/arc/pip" \
@@ -127,7 +129,7 @@ for i in "$@"; do
             "$python" setup.py -q clean -a egg_info -r &&
             "$python" setup.py -q --with-speedup install --root=/)
         ;;
-    *-1.1)
+    *-1.[1-9]|*-1.[1-9][0-9])
         (cd "$HOME/src/genshi-0.8.x" &&
             rm -rf build &&
             "$python" setup.py -q clean -a egg_info &&
