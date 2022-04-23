@@ -7,113 +7,142 @@ repos_root=http://svn.edgewall.org/repos/trac
 
 LC_ALL=en_US.UTF8
 TMP=/dev/shm
+
+_cleanup() {
+    if [ -n "$tmpdir" -a -d "$tmpdir" ]; then
+        rm -rf "$tmpdir"
+    fi
+}
+
+_init_tmpdir() {
+    if [ -n "$tmpdir" -a -d "$tmpdir" ]; then
+        rm -rf -- "$tmpdir"
+    fi
+    tmpdir="$(mktemp -d --tmpdir="$TMP" init-XXXXXXXXX)"
+}
+
+trap _cleanup 0 1 2 3 15
 export TMP LC_ALL
 
 cd "$HOME"
 
 if [ $# -eq 0 ]; then
-    set 0.11  0.11.1 0.11.2 0.11.3 0.11.4 0.11.5 0.11.6 0.11.7 \
-        0.12  0.12.1 0.12.2 0.12.3 0.12.4 0.12.5 0.12.6 0.12.7 \
-        1.0 1.0.1 1.0.2 1.0.3 1.0.4 1.0.5 1.0.6.post2 1.0.7 1.0.8 1.0.9 \
-        1.0.10 1.0.11 \
-        1.1.1 1.1.2  1.1.3  1.1.4  1.1.5  1.1.6
+    set 0.11 0.11.1 0.11.2 0.11.3 0.11.4 0.11.5 0.11.6 0.11.7 \
+        0.12 0.12.1 0.12.2 0.12.3 0.12.4 0.12.5 0.12.6 0.12.7 \
+        1.0 1.0.1 1.0.2 1.0.3 1.0.4 1.0.5 1.0.6 1.0.7 1.0.8 1.0.9 \
+        1.0.10 1.0.11 1.0.12 1.0.13 1.0.14 1.0.15 1.0.17 1.0.18 1.0.19 \
+        1.1.1 1.1.2 1.1.3 1.1.4 1.1.5 1.1.6 \
+        1.2 1.2.1 1.2.2 1.2.3 1.2.4 1.2.5 \
+        1.3.1 1.3.2 1.3.3 1.3.4 1.3.5 1.3.6 \
+        1.4 1.4.1 1.4.2 \
+        1.5.2 1.5.3
 fi
 
-for i in "$@"; do
-    venvdir="$venvroot/trac/$i"
+for ver in "$@"; do
+    venvdir="$venvroot/trac/$ver"
     repos=
-    tracver=
+    pymajor=
     pyminor=
-    case "$i" in
-    py[23][0-9]/*)
-        pyminor=`expr "$i" : "py2\\([0-9]\\)"`
-        i="${i#py[23][0-9]/}"
+    case "$ver" in
+    py[23][0-9]*/*)
+        pymajor="$(expr "$ver" : 'py\([23]\)')"
+        pyminor="$(expr "$ver" : 'py[23]\([0-9]*\)')"
+        ver="${ver#py[23]*/}"
         ;;
     py*)
-        echo "Skipped '$i'"
+        echo "Skipped '$ver'"
         continue
         ;;
     esac
-    case "$i" in
+    case "$ver" in
     0.11|0.11.*)
+        [ -z "$pymajor" ] && pymajor=2
         [ -z "$pyminor" ] && pyminor=4
         ;;
     0.12|0.12.*)
+        [ -z "$pymajor" ] && pymajor=2
         [ -z "$pyminor" ] && pyminor=4
         ;;
-    1.0|1.0.*)
-        [ -z "$pyminor" ] && pyminor=5
+    1.[0124]|1.[0-4].*|1.5.1)
+        [ -z "$pymajor" ] && pymajor=2
+        [ -z "$pyminor" ] && pyminor=7
         ;;
-    1.1|1.1.*)
-        [ -z "$pyminor" ] && pyminor=6
+    1.5.[2-9])
+        [ -z "$pymajor" ] && pymajor=3
+        [ -z "$pyminor" ] && pyminor=9
         ;;
     0.11-stable)
+        [ -z "$pymajor" ] && pymajor=2
         [ -z "$pyminor" ] && pyminor=4
-        tracver=0.11
         repos=$repos_root/branches/0.11-stable
         ;;
     0.12-stable)
+        [ -z "$pymajor" ] && pymajor=2
         [ -z "$pyminor" ] && pyminor=4
-        tracver=0.12
         repos=$repos_root/branches/0.12-stable
         ;;
-    1.0-stable)
-        [ -z "$pyminor" ] && pyminor=5
-        tracver=1.0
-        repos=$repos_root/branches/1.0-stable
+    1.[024]-stable)
+        [ -z "$pymajor" ] && pymajor=2
+        [ -z "$pyminor" ] && pyminor=7
+        repos="$repos_root/branches/$ver"
         ;;
     trunk)
-        [ -z "$pyminor" ] && pyminor=6
-        tracver=1.1
-        repos=$repos_root/trunk
+        [ -z "$pymajor" ] && pymajor=3
+        [ -z "$pyminor" ] && pyminor=9
+        repos="$repos_root/trunk"
         ;;
     *)
-        echo "Skipped '$i'"
+        echo "Skipped '$ver'"
         continue
         ;;
     esac
-    if [ -z "$tracver" ]; then
-        tracver=`expr "$i" : "\\([0-9]*[.][0-9]*\\)"`
-    fi
-    pyver=py2$pyminor
-    pyname=python2.$pyminor
+    pyver=py$pymajor$pyminor
+    pyname=python$pymajor.$pyminor
+    python=/usr/bin/$pyname
     echo -n "Creating $venvdir..."
-    rm -rf "$venvdir"
+    rm -rf -- "$venvdir"
     case "$pyver" in
-    py2[45])
-        rm -rf "$TMP/virtualenv-1.7.2"
-        tar xzf "$arcdir/virtualenv-1.7.2.tar.gz" -C "$TMP"
-        PYTHONPATH="$TMP/virtualenv-1.7.2" "/usr/bin/$pyname" -m virtualenv \
-            -q -p "$python" --unzip-setuptools --never-download "$venvdir"
-        rm -rf "$TMP/virtualenv-1.7.2"
+        py24)   venvlib=1.7.2 ;;
+        py25)   venvlib=1.9.1 ;;
+        py26)   venvlib=15.2.0 ;;
+        py27|py3[45])
+                venvlib="virtualenv-16.7.9-py2.py3-none-any.whl" ;;
+        py3[6-9]|py3[1-9][0-9]|py4[0-9])
+                venvlib=venv ;;
+        *)      venvlib= ;;
+    esac
+    case "$venvlib" in
+    venv)
+        _init_tmpdir
+        "$python" -m venv --without-pip "$venvdir"
+        ;;
+    *.whl)
+        PYTHONPATH="$arcdir/$venvlib" \
+            "$python" -m virtualenv -q --unzip-setuptools --never-download \
+            "$venvdir"
         ;;
     *)
-        /usr/bin/virtualenv -q -p /usr/bin/$pyname --unzip-setuptools \
-            --never-download "$venvdir"
+        _init_tmpdir
+        tar xzf "$arcdir/virtualenv-$venvlib.tar.gz" -C "$tmpdir"
+        PYTHONPATH="$tmpdir/virtualenv-$venvlib" "$python" -m virtualenv \
+            -q --unzip-setuptools --never-download "$venvdir"
         ;;
     esac
     rm -rf "$venvdir/lib/$pyname/site-packages"
-    cp -al "$venvroot/$pyver/lib/$pyname/site-packages" \
-           "$venvdir/lib/$pyname/site-packages"
-    cp -al "$venvroot/$pyver-$tracver/lib/$pyname/site-packages/genshi" \
-           "$venvroot/$pyver-$tracver/lib/$pyname/site-packages/Genshi"-*.egg-info \
-           "$venvdir/lib/$pyname/site-packages"
-    for f in "$venvroot/$pyver"/bin/*; do
-        t="$venvdir/bin/`basename \"$f\"`"
-        if [ "`head -1 \"$f\"`" = "#!$venvroot/$pyver/bin/$pyname" ]; then
-            { echo "#!$venvdir/bin/$pyname"; tail -n +2 "$f"; } >"$t"
-            chmod --reference="$f" "$t"
-        elif [ ! -f "$t" ]; then
-            ln "$f" "$t"
-        fi
-    done
+    mkdir "$venvdir/lib/$pyname/site-packages"
+    echo "$venvroot/$pyver/lib/$pyname/site-packages" >"$venvdir/lib/$pyname/site-packages/.pth"
+    case "$ver" in
+    1.5.[23])
+        "$venvdir/bin/python" -m pip install -q -t "$venvdir/lib/$pyname/site-packages" 'Jinja2<3'
+        ;;
+    esac
     if [ -n "$repos" ]; then
-        tmpdir="`mktemp -d -p $TMP`"
-        svn co -q "$repos" "$tmpdir" || :
-        "$venvdir/bin/pip" install -q --download-cache="$HOME/arc/pip" "$tmpdir" || :
-        rm -rf "$tmpdir"
+        "$venvdir/bin/python" -m pip install -q "svn+$repos" || :
     else
-        "$venvdir/bin/pip" install -q --download-cache="$HOME/arc/pip" "http://download.edgewall.org/trac/Trac-$i.tar.gz"
+        case "$ver" in
+            1.0.6) ver="$ver.post2" ;;
+        esac
+        "$venvdir/bin/python" -m pip install -q "https://download.edgewall.org/trac/Trac-$ver.tar.gz"
     fi
-    "$venvdir/bin/python" -c 'from trac import __version__; print " Trac %s is installed." % __version__'
+    "$venvdir/bin/python" -c 'from trac import __version__; print(" Trac %s is installed." % __version__)'
 done

@@ -86,8 +86,8 @@ runtest() {
             continue
         fi
         elapse_1="`LC_ALL=C /bin/date +%s`"
-        dbname="trac_$elapse_1"
-        version="`sed -n "/^ *__version__ = '\\([0-9]*\\.[0-9]*\\)[^']*'*/ { s//\\1/; p; q }" "$workdir/src/trac/__init__.py"`"
+        dbname="trac_$(dd if=/dev/urandom bs=1 count=5 2>/dev/null | base32 | tr A-Z a-z)"
+        version="$(sed -n "/^ *__version__ = '\([0-9]*\.[0-9]*\)[^']*'*/ { s//\1/; p; q }" "$workdir/src/trac/__init__.py")"
         pids=
         echo -n "  Running tests on python$python..."
         for db in $databases; do
@@ -100,11 +100,14 @@ runtest() {
                 ;;
             postgres)
                 uri="postgres://tracuser:password@127.0.0.1/trac?schema=$dbname"
+                PGPASSWORD=password psql -h 127.0.0.1 -U tracuser trac \
+                    -c "CREATE SCHEMA $dbname" >/dev/null || :
                 ;;
             mysql)
                 uri="mysql://tracuser:password@127.0.0.1/$dbname"
-                mysql -utracuser -ppassword mysql \
-                    -e "CREATE DATABASE $dbname DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin"
+                mysql -h127.0.0.1 -utracuser -ppassword mysql \
+                    -e "CREATE DATABASE $dbname DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin" \
+                    2>/dev/null
                 ;;
             esac
             cp -al "$workdir/src" "$workdir/py$python-$db"
@@ -155,7 +158,7 @@ runtest() {
                 ;;
             mysql)
                 mysql -h127.0.0.1 -utracuser -ppassword mysql \
-                    -e "DROP DATABASE $dbname" || :
+                    -e "DROP DATABASE $dbname" 2>/dev/null || :
                 ;;
             esac
         done
@@ -224,7 +227,7 @@ $body";
             echo
             tar cf - -C "$nrevdir" . | /usr/bin/xz -9c | base64
             echo "--$boundary--"
-        } | sendmail "$mail"
+        } | sendmail -f "$mail" "$mail"
     fi
 }
 

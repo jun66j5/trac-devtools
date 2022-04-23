@@ -9,21 +9,22 @@ try:
 
      fcgiserv = trac.web._fcgi.WSGIServer(dispatch_request,
                                           bindAddress=sockaddr,
-                                          umask=07)
+                                          umask=0o007)
      fcgiserv.run()
 
 except SystemExit:
     raise
-except Exception, e:
-    print 'Content-Type: text/plain\r\n\r\n',
-    print 'Oops...'
-    print
-    print 'Trac detected an internal error:'
-    print
-    print e
-    print
-    import traceback
-    import StringIO
-    tb = StringIO.StringIO()
-    traceback.print_exc(file=tb)
-    print tb.getvalue()
+except Exception as e:
+    write = sys.stdout.write
+    write('Content-Type: text/plain\r\n'
+          '\r\n'
+          'Oops...\n'
+          '\n'
+          'Trac detected an internal error:\n'
+          '\n')
+    write(str(e))
+    print('\n\n')
+    import io, traceback
+    out = io.StringIO()
+    traceback.print_exc(file=out)
+    print(out.getvalue())
